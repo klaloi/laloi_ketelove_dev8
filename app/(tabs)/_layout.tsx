@@ -31,7 +31,7 @@ export default function TabLayout() {
           shadowRadius: 4,
           shadowOffset: { width: 0, height: 2 },
         },
-        headerTintColor: "#fff",//Le texte header toujours en blanc
+        headerTintColor: "#fff",//Le texte du header
         headerTitleStyle: {
           fontWeight: "bold",
           fontSize: 20,

@@ -58,7 +58,7 @@ export default function ConnectionScreen() {
       const userName = user?.firstName || user?.emailAddresses?.[0]?.emailAddress || "utilisateur";
       
       Alert.alert(
-        "Déjà connecté ✅",
+        "Déjà connecté !",
         `Vous êtes déjà connecté en tant que ${userName}. Voulez-vous accéder à l'accueil ?`,
         [
           {
@@ -133,8 +133,6 @@ export default function ConnectionScreen() {
       
       setLoadingMessage("Préparation de votre session...");
       await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log("📍 Navigation vers Home depuis Firebase");
       
       // Naviguer directement
       router.replace("/(tabs)/Home");
@@ -169,7 +167,6 @@ export default function ConnectionScreen() {
 
     setLoading(true);
     setLoadingMessage("Connexion avec Google...");
-    console.log("Starting Google OAuth Sign-In with Clerk...");
     
     try {
       setLoadingMessage("Ouverture de Google...");
@@ -204,7 +201,6 @@ export default function ConnectionScreen() {
             clerkUserId: clerkUserId
           };
 
-          console.log("Google User Data (Sign Up):", userData);
 
           if (clerkUserId) {
             await saveUserToRealtimeDB(clerkUserId, userData);
@@ -214,7 +210,6 @@ export default function ConnectionScreen() {
         setLoadingMessage("Préparation de votre session...");
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        console.log("📍 Navigation vers Home depuis Google");
         
         // Ne pas fermer le loading, naviguer directement
         router.replace("/(tabs)/Home");
@@ -226,7 +221,6 @@ export default function ConnectionScreen() {
         }, 500);
       }
     } catch (error: any) {
-      console.error("Google Sign-In Error:", error);
       setLoading(false);
       setLoadingMessage("");
       Alert.alert("Erreur", "Impossible de se connecter avec Google.");
@@ -239,7 +233,6 @@ export default function ConnectionScreen() {
 
     setLoading(true);
     setLoadingMessage("Connexion avec Apple...");
-    console.log("Starting Apple OAuth Sign-In with Clerk...");
     
     try {
       setLoadingMessage("Ouverture d'Apple...");
@@ -272,7 +265,6 @@ export default function ConnectionScreen() {
             clerkUserId: clerkUserId
           };
 
-          console.log("Apple User Data (Sign Up):", userData);
 
           if (clerkUserId) {
             await saveUserToRealtimeDB(clerkUserId, userData);
@@ -282,7 +274,6 @@ export default function ConnectionScreen() {
         setLoadingMessage("Préparation de votre session...");
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        console.log("📍 Navigation vers Home depuis Apple");
         
         // Naviguer directement sans Alert
         router.replace("/(tabs)/Home");
@@ -294,7 +285,6 @@ export default function ConnectionScreen() {
         }, 500);
       }
     } catch (error: any) {
-      console.error("Apple Sign-In Error:", error);
       setLoading(false);
       setLoadingMessage("");
       Alert.alert("Erreur", "Impossible de se connecter avec Apple.");
@@ -307,7 +297,6 @@ export default function ConnectionScreen() {
 
     setLoading(true);
     setLoadingMessage("Connexion avec Facebook...");
-    console.log("Starting Facebook OAuth Sign-In with Clerk...");
     
     try {
       setLoadingMessage("Ouverture de Facebook...");
@@ -340,7 +329,6 @@ export default function ConnectionScreen() {
             clerkUserId: clerkUserId
           };
 
-          console.log("Facebook User Data (Sign Up):", userData);
 
           if (clerkUserId) {
             await saveUserToRealtimeDB(clerkUserId, userData);
@@ -350,7 +338,6 @@ export default function ConnectionScreen() {
         setLoadingMessage("Préparation de votre session...");
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        console.log("📍 Navigation vers Home depuis Facebook");
         
         // Naviguer directement sans Alert
         router.replace("/(tabs)/Home");
@@ -362,7 +349,6 @@ export default function ConnectionScreen() {
         }, 500);
       }
     } catch (error: any) {
-      console.error("Facebook Sign-In Error:", error);
       setLoading(false);
       setLoadingMessage("");
       Alert.alert("Erreur", "Impossible de se connecter avec Facebook.");

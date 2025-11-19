@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
 
-  // Animations avancées
+  //Animations avancées
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -34,7 +34,7 @@ export default function WelcomeScreen() {
   const floatAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Animation d'entrée sophistiquée
+    //Animation d'entrée sophistiquée
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -55,7 +55,7 @@ export default function WelcomeScreen() {
       }),
     ]).start();
 
-    // Animation de rotation continue pour le logo
+    //Animation de rotation continue pour le logo
     Animated.loop(
       Animated.sequence([
         Animated.timing(rotateAnim, {
@@ -71,7 +71,7 @@ export default function WelcomeScreen() {
       ])
     ).start();
 
-    // Animation de pulsation pour le bouton
+    //Animation de pulsation pour le bouton
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -87,7 +87,7 @@ export default function WelcomeScreen() {
       ])
     ).start();
 
-    // Animation flottante pour l'image
+    //Animation flottante pour l'image
     Animated.loop(
       Animated.sequence([
         Animated.timing(floatAnim, {
@@ -256,7 +256,7 @@ export default function WelcomeScreen() {
           resizeMode="contain"
         />
 
-        {/* Bouton CTA moderne */}
+        {/* Bouton*/}
         <Animated.View
           style={[
             styles.buttonContainer,

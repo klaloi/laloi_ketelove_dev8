@@ -53,8 +53,6 @@ export default function MonCompteScreen() {
 
       //On vérifie d'abord si connecté via Clerk
       if (clerkLoaded && isClerkSignedIn && clerkUser) {
-        console.log("👤 Utilisateur connecté via CLERK:", clerkUser.id);
-        console.log("📧 Email Clerk:", clerkUser.primaryEmailAddress?.emailAddress);
 
         const userId = clerkUser.id;
         await loadUserInfo(userId);
@@ -77,7 +75,7 @@ export default function MonCompteScreen() {
                 });
               });
             } else {
-              Alert.alert("Aucun produit trouvé pour cet utilisateur Clerk.");
+              Alert.alert("Vous n'avez pas encore posté de produits.");
             }
 
             products.sort((a, b) => {

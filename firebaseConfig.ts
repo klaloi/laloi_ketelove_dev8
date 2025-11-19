@@ -27,34 +27,28 @@ const firebaseConfig = {
 // ==================== INITIALISATION ====================
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// ✅ Auth avec persistance (React Native)
+// Auth avec persistance (React Native)
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),
 });
 
-// ✅ Base de données en temps réel
+// Base de données en temps réel
 export const db = getDatabase(app);
 
-// ===============================================================
-// ✅ ENREGISTRER UN UTILISATEUR DANS LA REALTIME DATABASE
-// ===============================================================
+//  ENREGISTRER UN UTILISATEUR DANS LA REALTIME DATABASE
 export const saveUserToRealtimeDB = async (uid: string, userData: any) => {
   const userRef = ref(db, `users/${uid}`);
   await set(userRef, { ...userData, createdAt: new Date().toISOString() });
 };
 
-// ===============================================================
-// ✅ AJOUTER UN PRODUIT LIÉ À UN UTILISATEUR
-// ===============================================================
+// AJOUTER UN PRODUIT LIÉ À UN UTILISATEUR
 export const addProduct = async (uid: string, productData: any) => {
   const productsRef = ref(db, `products/${uid}`);
   const newProductRef = push(productsRef);
   await set(newProductRef, { ...productData, createdAt: new Date().toISOString() });
 };
 
-// ===============================================================
-// ✅ RÉCUPÉRER LES PRODUITS D’UN UTILISATEUR
-// ===============================================================
+// RÉCUPÉRER LES PRODUITS D’UN UTILISATEUR
 export const getUserProducts = async (uid: string) => {
   const dbRef = ref(db);
   const snapshot = await get(child(dbRef, `products/${uid}`));
@@ -65,17 +59,17 @@ export const getUserProducts = async (uid: string) => {
   return [];
 };
 
-// ===============================================================
-// ✅ METTRE À JOUR UN PRODUIT
-// ===============================================================
+
+// METTRE À JOUR UN PRODUIT
+
 export const updateProduct = async (uid: string, productId: string, updatedData: any) => {
   const productRef = ref(db, `products/${uid}/${productId}`);
   await update(productRef, updatedData);
 };
 
-// ===============================================================
-// ✅ SUPPRIMER UN PRODUIT
-// ===============================================================
+
+// SUPPRIMER UN PRODUIT
+
 export const deleteProduct = async (uid: string, productId: string) => {
   const productRef = ref(db, `products/${uid}/${productId}`);
   await remove(productRef);

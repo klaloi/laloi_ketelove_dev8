@@ -90,16 +90,14 @@ function RootLayoutNav() {
         <Stack.Screen 
           name="Connection" 
           options={{ 
-            title: 'Créer un compte',
-            headerShown: true,
+            headerShown: false,
           }} 
         />
         
         <Stack.Screen 
           name="Login" 
           options={{ 
-            title: 'Connexion',
-            headerShown: true,
+            headerShown: false,
           }} 
         />
 
