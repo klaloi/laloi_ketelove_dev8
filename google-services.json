@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "55538985218",
+    "project_id": "auth-a2378",
+    "storage_bucket": "auth-a2378.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55538985218:android:4c4222b6ed973fd1e87a1b",
+        "android_client_info": {
+          "package_name": "com.klaloi.Bizay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "55538985218-vbiskfv8u9he1qg2d6pon70a1rntio1r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.klaloi.Bizay",
+            "certificate_hash": "42f6c3023d13832777fc640a4b67604cb32d6fe9"
+          }
+        },
+        {
+          "client_id": "55538985218-ordrm2km2jbr6u4eomjl483civhrl89p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIHUt_SMAvAok8rHyzgorAS_12JJkODUM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "55538985218-ordrm2km2jbr6u4eomjl483civhrl89p.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "55538985218-j407t9c6pqhpb59jusdth2oie2q163ss.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.klaloi.Bizay"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
