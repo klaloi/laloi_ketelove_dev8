@@ -1,4 +1,3 @@
-// AppHeader.tsx - VERSION OPTIMISÉE (identique au menu Home)
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -227,7 +226,20 @@ export default function AppHeader({ userData, setUserData, setInitials }: AppHea
               
               console.log("✅ Logout successful");
               
-              Alert.alert("Déconnecté ✅", "Vous avez été déconnecté avec succès.");
+              // ✨ NOUVELLE FONCTIONNALITÉ : Redirection vers ExploreGuest
+              Alert.alert(
+                "Déconnecté ✅", 
+                "Vous avez été déconnecté avec succès.",
+                [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      // Redirection vers la page ExploreGuest
+                      router.replace("../ExploreGuest");
+                    }
+                  }
+                ]
+              );
               
             } catch (error) {
               console.error("Logout error:", error);

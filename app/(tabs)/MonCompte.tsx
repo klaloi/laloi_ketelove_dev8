@@ -31,7 +31,6 @@ export default function MonCompteScreen() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Champs d'édition
   const [editFirstName, setEditFirstName] = useState("");
   const [editLastName, setEditLastName] = useState("");
   const [editPhone, setEditPhone] = useState("");
@@ -40,24 +39,20 @@ export default function MonCompteScreen() {
   const auth = getAuth();
   const router = useRouter();
 
-  //Hooks Clerk pour supporter OAuth
   const { user: clerkUser, isLoaded: clerkLoaded } = useUser();
   const { isSignedIn: isClerkSignedIn } = useAuth();
 
-  //Charger les données utilisateur (Firebase + Clerk)
   useEffect(() => {
     let productsUnsubscribe: (() => void) | null = null;
 
     const loadUser = async () => {
       setLoading(true);
 
-      //On vérifie d'abord si connecté via Clerk
+      // Clerk d'abord
       if (clerkLoaded && isClerkSignedIn && clerkUser) {
-
         const userId = clerkUser.id;
         await loadUserInfo(userId);
 
-        //Écouter les produits de cet utilisateur qui est connecté
         const userProductsRef = ref(db, `products/${userId}`);
         
         productsUnsubscribe = onValue(
@@ -74,8 +69,6 @@ export default function MonCompteScreen() {
                   ...val,
                 });
               });
-            } else {
-              Alert.alert("Vous n'avez pas encore posté de produits.");
             }
 
             products.sort((a, b) => {
@@ -83,12 +76,12 @@ export default function MonCompteScreen() {
               const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
               return dateB - dateA;
             });
-            //On fait le total des produits chargés
+
             setUserProducts(products);
             setLoading(false);
           },
           (err) => {
-            Alert.alert("❌ Erreur lors de l'écoute des produits:");
+            console.error("Erreur écoute produits:", err);
             setUserProducts([]);
             setLoading(false);
           }
@@ -97,7 +90,7 @@ export default function MonCompteScreen() {
         return;
       }
 
-      //Puis on verifie si l'utilisateur est connecté avec Firebase Auth
+      // Firebase Auth ensuite
       const unsubAuth = onAuthStateChanged(auth, async (user) => {
         if (user) {          
           await loadUserInfo(user.uid);
@@ -118,8 +111,6 @@ export default function MonCompteScreen() {
                     ...val,
                   });
                 });
-              } else {
-                Alert.alert("Aucun produit trouvé pour cet utilisateur");
               }
 
               products.sort((a, b) => {
@@ -132,28 +123,32 @@ export default function MonCompteScreen() {
               setLoading(false);
             },
             (err) => {
-              Alert.alert("On n'arrive pas a trouver vos produits pour l'instant, Veuillez réessayer plus tard !",);
+              console.error("Erreur écoute produits:", err);
               setUserProducts([]);
               setLoading(false);
             }
           );
         } else {
+          // Non connecté - redirection
           setUserInfo(null);
           setUserProducts([]);
           setLoading(false);
 
-          //Redirection vers connexion
           Alert.alert(
-            "Non connecté",
+            "Connexion requise",
             "Vous devez vous connecter pour accéder à votre compte.",
             [
               {
                 text: "Se connecter",
-                onPress: () => router.push("/Login")
+                onPress: () => router.replace("/Login")
               },
               {
                 text: "S'inscrire",
-                onPress: () => router.push("/Connection")
+                onPress: () => router.replace("/Connection")
+              },
+              {
+                text: "Mode invité",
+                onPress: () => router.replace("/ExploreGuest")
               }
             ]
           );
@@ -167,7 +162,6 @@ export default function MonCompteScreen() {
 
     loadUser();
 
-    //Nettoyage de l'ecouteur des produits
     return () => {
       if (productsUnsubscribe) {
         productsUnsubscribe();
@@ -175,30 +169,25 @@ export default function MonCompteScreen() {
     };
   }, [clerkLoaded, isClerkSignedIn, clerkUser]);
 
-  //Recharger l'info utilisateur quand l'écran est focus
   useFocusEffect(
     useCallback(() => {
       const loadOnFocus = async () => {
-        //Priorité à Clerk
         if (clerkLoaded && isClerkSignedIn && clerkUser) {
           await loadUserInfo(clerkUser.id);
         } 
-        //Sinon Firebase
         else if (auth.currentUser) {
           await loadUserInfo(auth.currentUser.uid);
         }
       };
 
       loadOnFocus().catch((err) => {
-        Alert.alert("Erreur de chargement des produits.", err);
+        console.error("Erreur chargement focus:", err);
       });
     }, [clerkLoaded, isClerkSignedIn, clerkUser])
   );
 
-  //Lecture des informations utilisateur
   const loadUserInfo = async (uid: string) => {
     try {
-      console.log("📖 Chargement des infos utilisateur:", uid);
       const dbRef = ref(db);
       const snapshot = await get(child(dbRef, `users/${uid}`));
       
@@ -207,21 +196,17 @@ export default function MonCompteScreen() {
         const userData = { ...data, uid };
         setUserInfo(userData);
 
-        //Pré-remplissage des champs d'édition
         setEditFirstName(data.firstName || "");
         setEditLastName(data.lastName || "");
         setEditPhone(data.phone || "");
         setEditAddress(data.address || "");
 
-        //Créer les initials des utilisateurs
         const fInitial = (data.firstName?.[0] || "").toUpperCase();
         const lInitial = (data.lastName?.[0] || "").toUpperCase();
         setInitials(fInitial + lInitial);
         
       } else {
-        Alert.alert("Aucune info utilisateur trouvée pour l'utilisateur.");
-        
-        //Si connecté via Clerk mais pas de données Firebase, utiliser Clerk
+        // Utiliser données Clerk si pas de données Firebase
         if (clerkUser) {
           const firstName = clerkUser.firstName || "";
           const lastName = clerkUser.lastName || "";
@@ -237,20 +222,19 @@ export default function MonCompteScreen() {
             address: "",
             initials: fInitial + lInitial,
           };
-          //Utilisation des données sur clerk
+
           setUserInfo(clerkData);
           setInitials(fInitial + lInitial);
           setEditFirstName(firstName);
           setEditLastName(lastName);
           setEditPhone(clerkUser.primaryPhoneNumber?.phoneNumber || "");
-          
-        
         } else {
           setUserInfo(null);
         }
       }
     } catch (error: any) {
-      Alert.alert("Erreur", "Impossible de charger vos informations utilisateur.");
+      console.error("Erreur chargement info utilisateur:", error);
+      Alert.alert("Erreur", "Impossible de charger vos informations.");
       setUserInfo(null);
     }
   };
@@ -258,16 +242,14 @@ export default function MonCompteScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      //Priorité à Clerk
       if (clerkUser) {
         await loadUserInfo(clerkUser.id);
       } 
-      //Sinon Firebase
       else if (auth.currentUser) {
         await loadUserInfo(auth.currentUser.uid);
       }
     } catch (err) {
-      Alert.alert("Erreur lors du rafraîchissement");
+      console.error("Erreur rafraîchissement:", err);
     } finally {
       setRefreshing(false);
     }
@@ -294,7 +276,7 @@ export default function MonCompteScreen() {
     }
 
     if (!editFirstName.trim() || !editLastName.trim()) {
-      Alert.alert("Erreur", "Le prénom et le nom sont obligatoires.");
+      Alert.alert("Champs requis", "Le prénom et le nom sont obligatoires.");
       return;
     }
 
@@ -306,18 +288,16 @@ export default function MonCompteScreen() {
       const updates: any = {
         firstName: editFirstName.trim(),
         lastName: editLastName.trim(),
-        phone: editPhone.trim() || null,
-        address: editAddress.trim() || null,
+        phone: editPhone.trim() || "",
+        address: editAddress.trim() || "",
       };
 
-      //Mettre à jour les initiales apres modification
       const fInitial = editFirstName[0]?.toUpperCase() || "";
       const lInitial = editLastName[0]?.toUpperCase() || "";
       updates.initials = fInitial + lInitial;
 
       await update(userRef, updates);
 
-      //Mettre à jour l'état local
       const updatedUserInfo = {
         ...userInfo,
         ...updates,
@@ -326,9 +306,10 @@ export default function MonCompteScreen() {
       setUserInfo(updatedUserInfo);
       setInitials(updates.initials);
 
-      Alert.alert("Succès ✅", "Vos informations ont été mises à jour.");
       setEditModalVisible(false);
+      Alert.alert("Succès", "Vos informations ont été mises à jour.");
     } catch (error) {
+      console.error("Erreur sauvegarde:", error);
       Alert.alert("Erreur", "Impossible de sauvegarder les modifications.");
     } finally {
       setIsEditing(false);
@@ -341,9 +322,7 @@ export default function MonCompteScreen() {
       return;
     }
 
-    //Récupérer l'ID utilisateur (Clerk ou Firebase)
     const currentUid = clerkUser?.id || auth.currentUser?.uid || "";
-
 
     router.push({
       pathname: "../ProductDetailScreen",
@@ -364,7 +343,7 @@ export default function MonCompteScreen() {
 
   const navigateToAddProducts = () => {
     if (!userInfo) {
-      Alert.alert("Erreur", "Veuillez vous connecter pour ajouter un produit.");
+      Alert.alert("Connexion requise", "Veuillez vous connecter pour ajouter un produit.");
       return;
     }
 
@@ -410,7 +389,7 @@ export default function MonCompteScreen() {
         }
         ListHeaderComponent={
           <>
-            {/*Section Profil*/}
+            {/* Section Profil */}
             {userInfo ? (
               <View style={styles.userInfo}>
                 <Image
@@ -427,10 +406,9 @@ export default function MonCompteScreen() {
                 </Text>
                 <Text style={styles.email}>{userInfo.email}</Text>
 
-                {/* Badge du provider */}
                 {clerkUser && (
                   <View style={styles.providerBadge}>
-                    <Ionicons name="logo-google" size={14} color="#4285F4" />
+                    <Ionicons name="shield-checkmark" size={14} color="#4285F4" />
                     <Text style={styles.providerText}>Connecté via OAuth</Text>
                   </View>
                 )}
@@ -465,7 +443,7 @@ export default function MonCompteScreen() {
               </View>
             )}
 
-            {/*Section Produits */}
+            {/* Section Produits */}
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>🛍️ Mes produits postés</Text>
               <Text style={styles.productCount}>({userProducts.length})</Text>
@@ -531,7 +509,7 @@ export default function MonCompteScreen() {
         }
       />
 
-      {/*Modal d'édition des informations de l'utilisateur */}
+      {/* Modal d'édition */}
       <Modal
         visible={editModalVisible}
         animationType="slide"
@@ -619,13 +597,11 @@ export default function MonCompteScreen() {
   );
 }
 
-//Styles
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   contentContainer: { padding: 16, paddingBottom: 32 },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  // Profil
   userInfo: { alignItems: "center", marginVertical: 20, paddingHorizontal: 20 },
   avatar: {
     width: 100,
@@ -678,7 +654,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 
-  //Sections vides
   noInfoBox: {
     alignItems: "center",
     marginVertical: 30,
@@ -702,7 +677,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  //Section produits
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -768,7 +742,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  //Boutons
   addButton: {
     backgroundColor: "#146C6C",
     borderRadius: 10,
@@ -788,7 +761,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  //Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",

@@ -41,7 +41,6 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  //Chargement de tous les données des utilisateurs
   useEffect(() => {
     loadUserData();
   }, [clerkUser, clerkLoaded]);
@@ -50,12 +49,10 @@ export default function HomeScreen() {
     try {
       let userId = "";
       
-      //On vérifie d'abord si l'utilisateur est connecté avec Clerk
       if (clerkLoaded && clerkUser) {
         userId = clerkUser.id;
         setIsConnected(true);
         setCurrentUserId(userId);
-        
         
         const userRef = ref(db, `users/${clerkUser.id}`);
         const snapshot = await get(userRef);
@@ -82,8 +79,6 @@ export default function HomeScreen() {
           });
         }
       }
-      
-      //SI l'utilisateur n'est pas connecté avec clerk on verifie si il est connecté avec Firebase Auth
       else if (auth.currentUser) {
         userId = auth.currentUser.uid;
         setIsConnected(true);
@@ -100,18 +95,16 @@ export default function HomeScreen() {
           setInitials(fInitial + lInitial);
         }
       } else {
-        //Cas si il n'y a aucun utilisateur connecté
         setIsConnected(false);
         setUserData(undefined);
         setInitials(null);
         setCurrentUserId("");
       }
     } catch (error) {
-      Alert.alert("Erreur chargement des données utilisateur!");
+      Alert.alert("Erreur", "Impossible de charger vos informations utilisateur.");
     }
   };
 
-  //Récupération de tous les  produits dans la base de données
   useEffect(() => {
     fetchAllProducts();
   }, []);
@@ -134,7 +127,6 @@ export default function HomeScreen() {
       const productPromises = Object.keys(data).map(async (uid) => {
         const userProducts = data[uid];
         
-        //Récupération du  nom des personnes qui ont posté des produits
         const userSnapshot = await get(ref(db, `users/${uid}`));
         let postedByFirstName = "Anonyme";
         
@@ -143,7 +135,6 @@ export default function HomeScreen() {
           postedByFirstName = u.firstName || "Anonyme";
         }
 
-        //Traiter tous les produits des utilisateurs
         return Object.keys(userProducts).map((key) => {
           const product = userProducts[key];
           return {
@@ -165,7 +156,6 @@ export default function HomeScreen() {
       const results = await Promise.all(productPromises);
       const allProductsArray = results.flat();
 
-      //On trie par date, on met les plus récents en premier.
       allProductsArray.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -181,7 +171,6 @@ export default function HomeScreen() {
     }
   };
 
-  //Recherche optimisée avec debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchText.trim() === "") {
@@ -208,18 +197,16 @@ export default function HomeScreen() {
     return () => clearTimeout(timeoutId);
   }, [searchText, allProducts]);
 
-  //Pull to refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await Promise.all([loadUserData(), fetchAllProducts()]);
     setRefreshing(false);
   }, []);
 
-  // Navigation vers AddProducts
   const handleNavigateToAddProducts = () => {
     if (!isConnected || !userData) {
       Alert.alert(
-        "Non connecté",
+        "Connexion requise",
         "Vous devez vous connecter pour publier un produit.",
         [
           { text: "Se connecter", onPress: () => router.push("/Login") },
@@ -245,7 +232,6 @@ export default function HomeScreen() {
     });
   };
 
-  //Quand on clique sur un produit pour voir tous les informations sur ce produit
   const openProductDetail = useCallback((product: ProductData) => {
     const userId = clerkUser?.id || auth.currentUser?.uid || "";
     
@@ -259,7 +245,7 @@ export default function HomeScreen() {
     });
   }, [clerkUser, router]);
 
-  //Pour gérér la partie du Déconnexion
+  // Déconnexion améliorée avec redirection vers ExploreGuest
   const handleSignOut = async () => {
     Alert.alert(
       "Déconnexion",
@@ -271,18 +257,22 @@ export default function HomeScreen() {
           style: "destructive",
           onPress: async () => {
             try {
+              // Déconnexion Clerk et Firebase
               if (clerkUser) await clerkSignOut();
               if (auth.currentUser) await signOut(auth);
               
+              // Réinitialiser l'état
               setUserData(undefined);
               setInitials(null);
               setIsConnected(false);
               setCurrentUserId("");
               setUserMenuVisible(false);
               
-              Alert.alert("Déconnecté ✅", "Vous avez été déconnecté avec succès.");
+              // Redirection vers ExploreGuest 
+              router.replace("/ExploreGuest");
+              
             } catch (error) {
-              Alert.alert("Erreur", "Impossible de se déconnecter.");
+              Alert.alert("Erreur", "Impossible de se déconnecter. Réessayez.");
             }
           },
         },
@@ -290,12 +280,10 @@ export default function HomeScreen() {
     );
   };
 
-  //Calcul du nombre de vendeurs uniques (mémorisé)
   const uniqueSellersCount = useMemo(() => {
     return new Set(allProducts.map(p => p.userId)).size;
   }, [allProducts]);
 
-  //Render d'un produit
   const renderProduct = useCallback(({ item }: { item: ProductData }) => (
     <TouchableOpacity
       style={styles.productCard}
@@ -347,8 +335,6 @@ export default function HomeScreen() {
     </TouchableOpacity>
   ), [openProductDetail]);
 
-  /*Dans la barre de recherche si l'uilisateur rentre un nom de
-   produits qui n'est pas dans la base de données */
   const ListEmptyComponent = useCallback(() => (
     <View style={styles.emptyContainer}>
       <Ionicons name="cube-outline" size={80} color="#ccc" />
@@ -373,7 +359,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/*Header fixe*/}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setMenuVisible(true)} style={styles.headerButton}>
           <Ionicons name="menu-outline" size={28} color="#0F1E33" />
@@ -397,7 +383,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/*ScrollView avec tout le contenu de la page*/}
+      {/* ScrollView principal */}
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -412,12 +398,12 @@ export default function HomeScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.contentContainer}>
-          {/*Badge de statut*/}
+          {/* Badge de statut */}
           {!isConnected ? (
             <View style={styles.statusBadge}>
               <Ionicons name="information-circle-outline" size={18} color="#FF9800" />
               <Text style={styles.statusText}>
-                Mode invité - Connectez-vous pour publier
+                Vous n'etes pas connecté - Connectez-vous pour publier
               </Text>
             </View>
           ) : userData ? (
@@ -449,7 +435,7 @@ export default function HomeScreen() {
             )}
           </View>
 
-          {/*Bouton Catégories*/}
+          {/* Bouton Catégories */}
           <TouchableOpacity
             style={styles.categoriesButton}
             onPress={() => router.push("../Categories")}
@@ -498,7 +484,7 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          {/*Liste des produits */}
+          {/* Liste des produits */}
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#146C6C" />
@@ -514,12 +500,11 @@ export default function HomeScreen() {
             ))
           )}
 
-          {/*Espace supplémentaire en bas */}
           <View style={styles.bottomSpacer} />
         </View>
       </ScrollView>
 
-      {/* Bouton flottant pour ajouter des produits */}
+      {/* Bouton flottant */}
       <TouchableOpacity
         style={styles.addButton}
         onPress={handleNavigateToAddProducts}
@@ -528,7 +513,7 @@ export default function HomeScreen() {
         <Ionicons name="add" size={28} color="#fff" />
       </TouchableOpacity>
 
-      {/*Menu de gauche*/}
+      {/* Menu de gauche */}
       <Modal
         transparent
         visible={menuVisible}
@@ -597,7 +582,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/*Menu utilisateur droite*/}
+      {/* Menu utilisateur */}
       <Modal
         transparent
         visible={userMenuVisible}
