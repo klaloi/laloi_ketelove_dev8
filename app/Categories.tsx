@@ -24,6 +24,7 @@ type Product = {
   userId: string;
   price?: string;
   location?: string;
+  postedBy?: string;
 };
 
 export default function CategoriesScreen() {
@@ -45,7 +46,6 @@ export default function CategoriesScreen() {
       setLoading(true);
       
       try {
-        
         //Récupérer tous les produits
         const productsRef = ref(db, "products");
         const snapshot = await get(productsRef);
@@ -68,6 +68,15 @@ export default function CategoriesScreen() {
           const userProducts = data[uid];
           const productIds = Object.keys(userProducts);
           
+          // Récupérer les infos du vendeur
+          const userSnapshot = await get(ref(db, `users/${uid}`));
+          let postedByFirstName = "Anonyme";
+          
+          if (userSnapshot.exists()) {
+            const u = userSnapshot.val();
+            postedByFirstName = u.firstName || "Anonyme";
+          }
+          
           for (const pid of productIds) {
             const p = userProducts[pid];
             const category = p.category || "Autres";
@@ -81,13 +90,13 @@ export default function CategoriesScreen() {
               userId: uid,
               price: p.price,
               location: p.location || "",
+              postedBy: postedByFirstName,
             };
 
             tempProducts.push(product);
             categorySet.add(category);
           }
         }
-
 
         setAllProducts(tempProducts);
         setCategories(Array.from(categorySet).sort());
@@ -185,35 +194,55 @@ export default function CategoriesScreen() {
     );
   };
 
-  //Rendu d'un produit
+  //Rendu d'un produit (style identique à Home)
   const renderProduct = ({ item }: { item: Product }) => (
     <TouchableOpacity
       style={styles.productCard}
+      activeOpacity={0.85}
       onPress={() => handleProductPress(item)}
-      activeOpacity={0.8}
     >
-      {item.imageUrl ? (
-        <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
-      ) : (
-        <View style={styles.productImagePlaceholder}>
-          <Ionicons name="image-outline" size={40} color="#fff" />
-        </View>
-      )}
+      <Image
+        source={{
+          uri: item.imageUrl || "https://via.placeholder.com/80?text=Pas+d'image",
+        }}
+        style={styles.productImage}
+        resizeMode="cover"
+      />
       <View style={styles.productInfo}>
-        <Text style={styles.productTitle}>{item.name}</Text>
+        <Text style={styles.productTitle} numberOfLines={1}>
+          {item.name || "Sans titre"}
+        </Text>
         <Text style={styles.productDescription} numberOfLines={2}>
           {item.description || "Aucune description"}
         </Text>
-        {item.price && (
-          <Text style={styles.productPrice}>{item.price} HTG</Text>
-        )}
+        
+        <View style={styles.productFooter}>
+          {item.price && (
+            <View style={styles.priceContainer}>
+              <Text style={styles.productPrice}>{item.price} HTG</Text>
+            </View>
+          )}
+          {item.category && (
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryBadgeText}>{item.category}</Text>
+            </View>
+          )}
+        </View>
+        
         {item.location && (
-          <View style={styles.locationContainer}>
-            <Ionicons name="location" size={12} color="#fff" />
-            <Text style={styles.productLocation}>{item.location}</Text>
+          <View style={styles.locationRow}>
+            <Ionicons name="location-outline" size={12} color="#999" />
+            <Text style={styles.locationText} numberOfLines={1}>
+              {item.location}
+            </Text>
           </View>
         )}
+        
+        {item.postedBy && (
+          <Text style={styles.productPostedBy}>Par {item.postedBy}</Text>
+        )}
       </View>
+      <Ionicons name="chevron-forward" size={20} color="#ccc" />
     </TouchableOpacity>
   );
 
@@ -261,9 +290,14 @@ export default function CategoriesScreen() {
       )}
 
       {/* Titre de la section produits */}
-      <Text style={styles.productsTitle}>
-        {selectedCategory ? `Produits - ${selectedCategory}` : "Tous les produits"}
-      </Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.productsTitle}>
+          {selectedCategory ? `Produits - ${selectedCategory}` : "Tous les produits"}
+        </Text>
+        <Text style={styles.sectionSubtitle}>
+          {filteredProducts.length} produit{filteredProducts.length > 1 ? "s" : ""}
+        </Text>
+      </View>
     </>
   );
 
@@ -271,17 +305,30 @@ export default function CategoriesScreen() {
   const ListEmptyComponent = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="cube-outline" size={60} color="#ccc" />
+      <Text style={styles.emptyTitle}>
+        {selectedCategory
+          ? "Aucun produit"
+          : "Aucun produit disponible"}
+      </Text>
       <Text style={styles.emptyText}>
         {selectedCategory
           ? `Aucun produit dans la catégorie "${selectedCategory}"`
-          : "Aucun produit disponible"}
+          : "Les produits s'afficheront ici"}
       </Text>
+      {selectedCategory && (
+        <TouchableOpacity
+          style={styles.clearButton}
+          onPress={() => setSelectedCategory(null)}
+        >
+          <Text style={styles.clearButtonText}>Voir tous les produits</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
   if (loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <View style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
         <AppHeader
           userData={userInfo}
           setUserData={setUserInfo}
@@ -296,7 +343,7 @@ export default function CategoriesScreen() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
       <AppHeader
         userData={userInfo}
         setUserData={setUserInfo}
@@ -319,9 +366,9 @@ export default function CategoriesScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 15,
     paddingTop: 60,
-    backgroundColor: "#fff",
+    backgroundColor: "#F8F9FA",
     paddingBottom: 30,
   },
   loadingContainer: {
@@ -332,8 +379,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: "#146C6C",
-    fontWeight: "600",
+    color: "#666",
   },
   headerContainer: {
     marginBottom: 20,
@@ -354,7 +400,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   categoryButton: {
-    backgroundColor: "#F0F0F0",
+    backgroundColor: "#fff",
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderRadius: 12,
@@ -362,8 +408,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 2,
-    borderColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -371,7 +417,7 @@ const styles = StyleSheet.create({
   },
   categoryButtonSelected: {
     backgroundColor: "#146C6C",
-    borderColor: "#00FFCC",
+    borderColor: "#146C6C",
   },
   categoryText: {
     fontSize: 14,
@@ -383,7 +429,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   countBadge: {
-    backgroundColor: "#E0E0E0",
+    backgroundColor: "#E8F5F3",
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -391,12 +437,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   countBadgeSelected: {
-    backgroundColor: "#00FFCC",
+    backgroundColor: "#fff",
   },
   countText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#0F1E33",
+    color: "#146C6C",
   },
   countTextSelected: {
     color: "#146C6C",
@@ -421,80 +467,129 @@ const styles = StyleSheet.create({
   clearFilterButton: {
     padding: 4,
   },
-  productsTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0F1E33",
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 10,
     marginBottom: 15,
   },
+  productsTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0F1E33",
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: "#666",
+  },
   productCard: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#0F8B8B",
-    borderRadius: 15,
+    backgroundColor: "#fff",
+    borderRadius: 12,
     padding: 12,
-    marginBottom: 15,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   productImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 10,
-  },
-  productImagePlaceholder: {
-    width: 70,
-    height: 70,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: "#F0F0F0",
   },
   productInfo: {
     flex: 1,
     marginLeft: 12,
+    justifyContent: "space-between",
   },
   productTitle: {
-    color: "#fff",
-    fontWeight: "700",
     fontSize: 16,
+    fontWeight: "700",
+    color: "#0F1E33",
     marginBottom: 4,
   },
   productDescription: {
-    color: "#fff",
     fontSize: 13,
-    marginBottom: 4,
+    color: "#666",
+    marginBottom: 8,
+  },
+  productFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+  priceContainer: {
+    backgroundColor: "#146C6C",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   productPrice: {
     color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-    marginTop: 5,
+    fontSize: 13,
+    fontWeight: "700",
   },
-  locationContainer: {
+  categoryBadge: {
+    backgroundColor: "#E8F5F3",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  categoryBadgeText: {
+    color: "#146C6C",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  locationRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 4,
+    marginBottom: 4,
   },
-  productLocation: {
-    color: "#fff",
-    fontSize: 12,
+  locationText: {
+    fontSize: 11,
+    color: "#999",
     marginLeft: 4,
+    flex: 1,
+  },
+  productPostedBy: {
+    fontSize: 11,
+    color: "#999",
+    fontStyle: "italic",
   },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 50,
-    paddingHorizontal: 20,
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#999",
+    marginTop: 20,
+    marginBottom: 8,
   },
   emptyText: {
-    textAlign: "center",
-    marginTop: 15,
-    color: "#666",
     fontSize: 14,
-    fontWeight: "500",
+    color: "#999",
+    textAlign: "center",
+    marginBottom: 20,
+    paddingHorizontal: 40,
+  },
+  clearButton: {
+    backgroundColor: "#146C6C",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  clearButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });
