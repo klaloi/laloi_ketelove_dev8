@@ -8,9 +8,9 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Image,
   Linking,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -273,228 +273,6 @@ export default function ProductDetailScreen() {
       });
   };
 
-  //Rendu du header de la FlatList
-  const renderHeader = () => (
-    <>
-      {/* Image du produit */}
-      <TouchableOpacity
-        disabled={!isOwner || !editing}
-        onPress={pickImage}
-        activeOpacity={0.8}
-      >
-        <Image
-          source={{
-            uri:
-              imageUrl ||
-              "https://cdn-icons-png.flaticon.com/512/3081/3081986.png",
-          }}
-          style={styles.image}
-        />
-        {isOwner && editing && (
-          <View style={styles.editImageBadge}>
-            <Ionicons name="camera" size={20} color="#fff" />
-            <Text style={styles.editImageText}>Modifier l'image</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-
-      {/*Badge de propriété */}
-      {isOwner && (
-        <View style={styles.ownerBadge}>
-          <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
-          <Text style={styles.ownerText}>Votre produit</Text>
-        </View>
-      )}
-
-      {/*Badge mode invité */}
-      {guestMode && (
-        <View style={styles.guestBadge}>
-          <Ionicons name="eye-outline" size={18} color="#FF9800" />
-          <Text style={styles.guestText}>Mode lecture seule</Text>
-        </View>
-      )}
-
-      {/*Mode édition */}
-      {editing ? (
-        <View style={styles.editContainer}>
-          <Text style={styles.label}>Titre *</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Titre du produit"
-            placeholderTextColor="#999"
-          />
-
-          <Text style={styles.label}>Prix (HTG) *</Text>
-          <TextInput
-            style={styles.input}
-            value={price}
-            onChangeText={setPrice}
-            keyboardType="numeric"
-            placeholder="Prix en HTG"
-            placeholderTextColor="#999"
-          />
-
-          <Text style={styles.label}>Description *</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            multiline
-            numberOfLines={5}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Description détaillée du produit"
-            placeholderTextColor="#999"
-          />
-
-          <Text style={styles.label}>Localisation</Text>
-          <TextInput
-            style={styles.input}
-            value={location}
-            onChangeText={setLocation}
-            placeholder="Ex: Port-au-Prince, Delmas 33"
-            placeholderTextColor="#999"
-          />
-
-          <Text style={styles.label}>Numéro de contact (WhatsApp)</Text>
-          <TextInput
-            style={styles.input}
-            value={contact}
-            onChangeText={setContact}
-            placeholder="Ex: +509 1234 5678"
-            placeholderTextColor="#999"
-            keyboardType="phone-pad"
-          />
-
-          <Text style={styles.requiredNote}>* Champs obligatoires</Text>
-
-          <TouchableOpacity
-            style={[styles.saveButton, saving && styles.buttonDisabled]}
-            onPress={handleSave}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
-                <Text style={styles.saveText}>Enregistrer</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => setEditing(false)}
-            disabled={saving}
-          >
-            <Text style={styles.cancelButtonText}>Annuler</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        /*Mode lecture */
-        <View style={styles.detailContainer}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.price}>{price} HTG</Text>
-
-          {product.category && (
-            <View style={styles.categoryBadge}>
-              <Ionicons name="pricetag" size={16} color="#146C6C" />
-              <Text style={styles.categoryText}>{product.category}</Text>
-            </View>
-          )}
-
-          <View style={styles.divider} />
-
-          <Text style={styles.sectionTitle}>📝 Description</Text>
-          <Text style={styles.desc}>
-            {description || "Aucune description disponible."}
-          </Text>
-
-          <View style={styles.divider} />
-
-          {location ? (
-            <View style={styles.infoRow}>
-              <Ionicons name="location" size={20} color="#146C6C" />
-              <Text style={styles.location}>{location}</Text>
-            </View>
-          ) : (
-            <Text style={styles.locationEmpty}>
-              📍 Localisation non spécifiée
-            </Text>
-          )}
-
-          {/* nformations du vendeur (si pas propriétaire) */}
-          {!isOwner && sellerInfo && (
-            <View style={styles.sellerCard}>
-              <Text style={styles.sellerTitle}>👤 Vendeur</Text>
-              <Text style={styles.sellerName}>
-                {sellerInfo.firstName} {sellerInfo.lastName}
-              </Text>
-              {sellerInfo.email && (
-                <Text style={styles.sellerInfo}>📧 {sellerInfo.email}</Text>
-              )}
-              {(contact || sellerInfo.phone) && (
-                <Text style={styles.sellerInfo}>
-                  📞 {contact || sellerInfo.phone}
-                </Text>
-              )}
-            </View>
-          )}
-
-          {/*Boutons d'action */}
-          {isOwner ? (
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.button, styles.editButton]}
-                onPress={() => setEditing(!editing)}
-                disabled={saving}
-              >
-                <Ionicons
-                  name={editing ? "close-circle" : "create"}
-                  size={20}
-                  color="#fff"
-                />
-                <Text style={styles.buttonText}>
-                  {editing ? "Annuler" : "Modifier"}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, styles.deleteButton]}
-                onPress={handleDelete}
-                disabled={saving}
-              >
-                <Ionicons name="trash" size={20} color="#fff" />
-                <Text style={styles.buttonText}>Supprimer</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={[styles.button, styles.contactButton]}
-              onPress={handleContactSeller}
-            >
-              <Ionicons name="logo-whatsapp" size={24} color="#fff" />
-              <Text style={styles.buttonText}>
-                {guestMode ? "Créer un compte pour contacter" : "Contacter sur WhatsApp"}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Message si pas de numéro disponible */}
-          {!isOwner && !guestMode && !contact && !sellerInfo?.phone && (
-            <View style={styles.warningBox}>
-              <Ionicons name="warning" size={20} color="#FF9800" />
-              <Text style={styles.warningText}>
-                Le vendeur n'a pas fourni de numéro de contact.
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-    </>
-  );
-
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -516,14 +294,228 @@ export default function ProductDetailScreen() {
         />
       )}
 
-      <FlatList
-        data={[]} // Pas de données, juste le header
-        renderItem={null}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.flatListContent}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-      />
+      >
+        {/* Image du produit */}
+        <TouchableOpacity
+          disabled={!isOwner || !editing}
+          onPress={pickImage}
+          activeOpacity={0.8}
+        >
+          <Image
+            source={{
+              uri:
+                imageUrl ||
+                "https://cdn-icons-png.flaticon.com/512/3081/3081986.png",
+            }}
+            style={styles.image}
+          />
+          {isOwner && editing && (
+            <View style={styles.editImageBadge}>
+              <Ionicons name="camera" size={20} color="#fff" />
+              <Text style={styles.editImageText}>Modifier l'image</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/*Badge de propriété */}
+        {isOwner && (
+          <View style={styles.ownerBadge}>
+            <Ionicons name="checkmark-circle" size={18} color="#4CAF50" />
+            <Text style={styles.ownerText}>Votre produit</Text>
+          </View>
+        )}
+
+        {/*Badge mode invité */}
+        {guestMode && (
+          <View style={styles.guestBadge}>
+            <Ionicons name="eye-outline" size={18} color="#FF9800" />
+            <Text style={styles.guestText}>Mode lecture seule</Text>
+          </View>
+        )}
+
+        {/*Mode édition */}
+        {editing ? (
+          <View style={styles.editContainer}>
+            <Text style={styles.label}>Titre *</Text>
+            <TextInput
+              style={styles.input}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Titre du produit"
+              placeholderTextColor="#999"
+            />
+
+            <Text style={styles.label}>Prix (HTG) *</Text>
+            <TextInput
+              style={styles.input}
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="numeric"
+              placeholder="Prix en HTG"
+              placeholderTextColor="#999"
+            />
+
+            <Text style={styles.label}>Description *</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              multiline
+              numberOfLines={5}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Description détaillée du produit"
+              placeholderTextColor="#999"
+            />
+
+            <Text style={styles.label}>Localisation</Text>
+            <TextInput
+              style={styles.input}
+              value={location}
+              onChangeText={setLocation}
+              placeholder="Ex: Port-au-Prince, Delmas 33"
+              placeholderTextColor="#999"
+            />
+
+            <Text style={styles.label}>Numéro de contact (WhatsApp)</Text>
+            <TextInput
+              style={styles.input}
+              value={contact}
+              onChangeText={setContact}
+              placeholder="Ex: +509 1234 5678"
+              placeholderTextColor="#999"
+              keyboardType="phone-pad"
+            />
+
+            <Text style={styles.requiredNote}>* Champs obligatoires</Text>
+
+            <TouchableOpacity
+              style={[styles.saveButton, saving && styles.buttonDisabled]}
+              onPress={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                  <Text style={styles.saveText}>Enregistrer</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setEditing(false)}
+              disabled={saving}
+            >
+              <Text style={styles.cancelButtonText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          /*Mode lecture */
+          <View style={styles.detailContainer}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.price}>{price} HTG</Text>
+
+            {product.category && (
+              <View style={styles.categoryBadge}>
+                <Ionicons name="pricetag" size={16} color="#146C6C" />
+                <Text style={styles.categoryText}>{product.category}</Text>
+              </View>
+            )}
+
+            <View style={styles.divider} />
+
+            <Text style={styles.sectionTitle}>📝 Description</Text>
+            <Text style={styles.desc}>
+              {description || "Aucune description disponible."}
+            </Text>
+
+            <View style={styles.divider} />
+
+            {location ? (
+              <View style={styles.infoRow}>
+                <Ionicons name="location" size={20} color="#146C6C" />
+                <Text style={styles.location}>{location}</Text>
+              </View>
+            ) : (
+              <Text style={styles.locationEmpty}>
+                📍 Localisation non spécifiée
+              </Text>
+            )}
+
+            {/* Informations du vendeur (si pas propriétaire) */}
+            {!isOwner && sellerInfo && (
+              <View style={styles.sellerCard}>
+                <Text style={styles.sellerTitle}>👤 Vendeur</Text>
+                <Text style={styles.sellerName}>
+                  {sellerInfo.firstName} {sellerInfo.lastName}
+                </Text>
+                {sellerInfo.email && (
+                  <Text style={styles.sellerInfo}>📧 {sellerInfo.email}</Text>
+                )}
+                {(contact || sellerInfo.phone) && (
+                  <Text style={styles.sellerInfo}>
+                    📞 {contact || sellerInfo.phone}
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/*Boutons d'action */}
+            {isOwner ? (
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={[styles.button, styles.editButton]}
+                  onPress={() => setEditing(!editing)}
+                  disabled={saving}
+                >
+                  <Ionicons
+                    name={editing ? "close-circle" : "create"}
+                    size={20}
+                    color="#fff"
+                  />
+                  <Text style={styles.buttonText}>
+                    {editing ? "Annuler" : "Modifier"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.button, styles.deleteButton]}
+                  onPress={handleDelete}
+                  disabled={saving}
+                >
+                  <Ionicons name="trash" size={20} color="#fff" />
+                  <Text style={styles.buttonText}>Supprimer</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[styles.button, styles.contactButton]}
+                onPress={handleContactSeller}
+              >
+                <Ionicons name="logo-whatsapp" size={24} color="#fff" />
+                <Text style={styles.buttonText}>
+                  {guestMode ? "Créer un compte pour contacter" : "Contacter sur WhatsApp"}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Message si pas de numéro disponible */}
+            {!isOwner && !guestMode && !contact && !sellerInfo?.phone && (
+              <View style={styles.warningBox}>
+                <Ionicons name="warning" size={20} color="#FF9800" />
+                <Text style={styles.warningText}>
+                  Le vendeur n'a pas fourni de numéro de contact.
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -536,7 +528,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
   },
-  flatListContent: {
+  scrollContent: {
     padding: 16,
     paddingTop: 50,
     paddingBottom: 30,

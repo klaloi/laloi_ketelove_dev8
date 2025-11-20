@@ -81,7 +81,6 @@ export default function MonCompteScreen() {
             setLoading(false);
           },
           (err) => {
-            console.error("Erreur écoute produits:", err);
             setUserProducts([]);
             setLoading(false);
           }
@@ -123,7 +122,6 @@ export default function MonCompteScreen() {
               setLoading(false);
             },
             (err) => {
-              console.error("Erreur écoute produits:", err);
               setUserProducts([]);
               setLoading(false);
             }
@@ -181,7 +179,6 @@ export default function MonCompteScreen() {
       };
 
       loadOnFocus().catch((err) => {
-        console.error("Erreur chargement focus:", err);
       });
     }, [clerkLoaded, isClerkSignedIn, clerkUser])
   );
@@ -233,7 +230,6 @@ export default function MonCompteScreen() {
         }
       }
     } catch (error: any) {
-      console.error("Erreur chargement info utilisateur:", error);
       Alert.alert("Erreur", "Impossible de charger vos informations.");
       setUserInfo(null);
     }
@@ -309,7 +305,6 @@ export default function MonCompteScreen() {
       setEditModalVisible(false);
       Alert.alert("Succès", "Vos informations ont été mises à jour.");
     } catch (error) {
-      console.error("Erreur sauvegarde:", error);
       Alert.alert("Erreur", "Impossible de sauvegarder les modifications.");
     } finally {
       setIsEditing(false);
